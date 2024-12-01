@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { DeployLottery } from "@components/lottery/DeployLottery";
 import { LotteryInfo } from "@components/lottery/LotteryInfo";
+import { ManageTokens } from "@components/lottery/ManageTokens";
+import { Address } from "@components/scaffold-eth";
 import { constants } from "@utils/constants";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
-import { Address } from "~~/components/scaffold-eth";
 
 const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
@@ -54,7 +55,7 @@ const Home: NextPage = () => {
                 </a>
               </div>
               {activeTab === "lotteryInfo" && <LotteryInfo />}
-              {/*{activeTab === "manageTokens" && <ManageTokens />}*/}
+              {activeTab === "manageTokens" && <ManageTokens />}
               {/*{activeTab === "manageBets" && <ManageBets />}*/}
             </div>
           </div>

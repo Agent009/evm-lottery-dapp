@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { renderLabelAndValue } from "@components/lottery/LabelAndValue";
 import { useReadData } from "@hooks/lotteryToken";
 import { useScaffoldReadContract } from "@hooks/scaffold-eth";
 import { formatEther } from "viem";
@@ -87,21 +88,6 @@ export const LotteryInfo = () => {
   );
 
   if (!mounted || !isConnected || !chainId) return null;
-
-  const renderLabelAndValue = <T extends bigint | boolean>(label: string, label2: string, value: T) => {
-    return (
-      <label className="form-control w-1/3 p-2">
-        <div className="label">
-          <span className="label-text">{label}</span>
-          <span className="label-text-alt">{label2}</span>
-        </div>
-        <code className="flex-1 block whitespace-pre overflow-none text-left bg-base-200 p-2 rounded-md">
-          {typeof value === "bigint" && formatEther(value)}
-          {typeof value === "boolean" && (value ? "Yes" : "No")}
-        </code>
-      </label>
-    );
-  };
 
   return (
     <div className="flex flex-col items-center p-4">
