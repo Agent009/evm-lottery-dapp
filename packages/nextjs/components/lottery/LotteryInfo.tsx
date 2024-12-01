@@ -1,18 +1,38 @@
 import { useEffect, useState } from "react";
+import { useReadData } from "@hooks/lotteryToken";
 import { useScaffoldReadContract } from "@hooks/scaffold-eth";
 import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 
 export const LotteryInfo = () => {
-  const { isConnected, chainId } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const [mounted, setMounted] = useState(false);
+  const [balance, setBalance] = useState<bigint>(0n);
   console.log("LotteryInfo -> init -> isConnected", isConnected, "chainId", chainId, "mounted", mounted);
+  const { data: tokenAddress } = useScaffoldReadContract({
+    contractName: "Lottery",
+    functionName: "paymentToken",
+    args: [],
+  });
+  const tokenData = useReadData(tokenAddress);
 
   useEffect(() => {
     if (isConnected) {
       setMounted(true);
     }
   }, [isConnected]);
+
+  useEffect(() => {
+    if (!mounted || !tokenAddress) return;
+
+    const fetchBalance = async () => {
+      const tokenBalance = (await tokenData("balanceOf", [address])) as unknown as bigint;
+      setBalance(tokenBalance);
+      console.log(`LotteryInfo -> fetchBalance -> tokenBalance (${address})`, tokenBalance);
+    };
+
+    fetchBalance();
+  }, [address, mounted, tokenAddress, tokenData]);
 
   const { data: purchaseRatio } = useScaffoldReadContract({
     contractName: "Lottery",
@@ -94,6 +114,7 @@ export const LotteryInfo = () => {
         {renderLabelAndValue<bigint>("Prize Pool", "ETH", prizePool)}
         {renderLabelAndValue<boolean>("Bets Open", "", betsOpen)}
         {renderLabelAndValue<bigint>("Bets Closing Time", "", betsClosingTime)}
+        {renderLabelAndValue<bigint>("Token Balance", "", balance)}
       </div>
     </div>
   );
