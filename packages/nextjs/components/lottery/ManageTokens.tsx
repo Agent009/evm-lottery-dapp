@@ -123,8 +123,8 @@ export const ManageTokens = () => {
       <div className="flex flex-wrap justify-center mt-5">
         <IntegerInput
           value={String(tokenAmount)}
-          onChange={updatedTxValue => {
-            setTokenAmount(Number(updatedTxValue));
+          onChange={val => {
+            setTokenAmount(Number(val));
           }}
           placeholder="Tokens"
         />

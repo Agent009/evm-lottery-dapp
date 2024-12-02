@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { Contract, parseEther } from "ethers";
+import { Contract } from "ethers";
 
 /**
  * Deploys the "Lottery" contract using the deployer account and constructor arguments set to the deployer address
@@ -20,16 +20,16 @@ const deployLottery: DeployFunction = async function (hre: HardhatRuntimeEnviron
   */
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
-  const BET_PRICE = "1";
-  const BET_FEE = "0.2";
-  const TOKEN_RATIO = 1n;
+  const TOKEN_RATIO = 1n; // Default: 10^18 tokens / ETH
+  const BET_PRICE = TOKEN_RATIO / 1000n; // Default: 10^15 tokens
+  const BET_FEE = BET_PRICE / 20n; // Default: 5% of bet price, 5^13 tokens
 
   const deployment = await deploy("Lottery", {
     from: deployer!,
     // Contract constructor arguments
-    args: ["LotteryToken", "LTO", TOKEN_RATIO, parseEther(BET_PRICE), parseEther(BET_FEE)],
+    args: ["LotteryToken", "LTO", TOKEN_RATIO, BET_PRICE, BET_FEE],
     log: true,
-    // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
+    // autoMine: can be passed to the "deploy" function to make the deployment process faster on local networks by
     // automatically mining the contract deployment transaction. There is no effect on live networks.
     autoMine: true,
   });

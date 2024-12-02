@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
+import { IntegerInput } from "@components/scaffold-eth";
 import Lottery from "@contracts/Lottery.json";
 import deployedContracts from "@contracts/deployedContracts";
 import { useScaffoldReadContract } from "@hooks/scaffold-eth";
+import { wagmiConfig } from "@services/web3/wagmiConfig";
 import { notification } from "@utils/scaffold-eth";
+import { getPublicClient } from "@wagmi/core";
 import { Hex, parseEther } from "viem";
 import { useAccount, useDeployContract } from "wagmi";
 
 export const DeployLottery = () => {
+  const ONE_ETH = parseEther("1");
   const { address, isConnected, chainId } = useAccount();
-  const { deployContract, data, error: deploymentError, isSuccess } = useDeployContract();
+  const { deployContract } = useDeployContract();
   const [mounted, setMounted] = useState(false);
   const [tokenName, setTokenName] = useState("");
   const [tokenSymbol, setTokenSymbol] = useState("");
-  const [purchaseRatio, setPurchaseRatio] = useState(1); // Default: 10^18 tokens / ETH
-  const [betPrice, setBetPrice] = useState(1 / 1000); // Default: 10^15 tokens
-  const [betFee, setBetFee] = useState((1 / 1000) * 0.05); // Default: 5% of bet price, 5^13 tokens
+  const [purchaseRatio, setPurchaseRatio] = useState<number>(Number(ONE_ETH)); // Default: 10^18 tokens / ETH
+  const [betPrice, setBetPrice] = useState<number>(Number(ONE_ETH / 1000n)); // Default: 10^15 tokens
+  const [betFee, setBetFee] = useState<number>(Number(ONE_ETH / 1000n / 20n)); // Default: 5% of bet price, 5^13 tokens
   const [loading, setLoading] = useState(false);
   console.log(
     "DeployLottery -> init -> isConnected",
@@ -59,33 +63,35 @@ export const DeployLottery = () => {
     try {
       setLoading(true);
 
-      const lotteryContract = deployContract({
-        abi: Lottery.abi,
-        args: [
-          tokenName,
-          tokenSymbol,
-          parseEther(String(purchaseRatio)),
-          parseEther(String(betPrice)),
-          parseEther(String(betFee)),
-        ],
-        bytecode: Lottery.bytecode as Hex,
-      });
-      console.log(
-        "DeployLottery -> deployLottery -> lotteryContract:",
-        lotteryContract,
-        "isSuccess:",
-        isSuccess,
-        "error",
-        deploymentError,
-        "data",
-        data,
-      );
-      notification.success(
-        "Lottery contract deployed successfully. You should update the contract addresses in the `deployedContracts` object.",
+      deployContract(
+        {
+          abi: Lottery.abi,
+          args: [tokenName, tokenSymbol, BigInt(purchaseRatio), BigInt(betPrice), BigInt(betFee)],
+          bytecode: Lottery.bytecode as Hex,
+        },
+        {
+          onError: error => {
+            console.error("DeployLottery -> deployLottery -> onError -> error", error);
+            notification.error("Lottery deployment failed. Check console for details.");
+          },
+          onSuccess: tx => {
+            console.log("DeployLottery -> deployLottery -> onSuccess -> tx", tx);
+            // @ts-expect-error ignore
+            const client = getPublicClient(wagmiConfig, { chainId: chainId });
+            client.getTransactionReceipt({ hash: tx }).then(receipt => {
+              const address = receipt.contractAddress || receipt.to;
+              console.log("DeployLottery -> deployLottery -> onSuccess -> address", address, "receipt", receipt);
+              notification.success(
+                `Lottery contract deployed successfully at: ${address}` +
+                  "\nYou should update the contract addresses in the `deployedContracts` object.",
+              );
+            });
+          },
+        },
       );
     } catch (error) {
-      console.error("Error deploying contract:", error);
-      notification.error("Deployment failed. Check console for details.");
+      console.error("DeployLottery -> deployLottery -> error", error);
+      notification.error("Lottery contract deployment failed. Check console for details.");
     } finally {
       setLoading(false);
     }
@@ -150,49 +156,70 @@ export const DeployLottery = () => {
         <label className="form-control w-full max-w-xs">
           <div className="label">
             <span className="label-text">Purchase Ratio</span>
-            <span className="label-text-alt">ETH Value</span>
+            <span className="label-text-alt">WEI Value</span>
           </div>
-          <input
-            type="number"
+          {/*<input*/}
+          {/*  type="number"*/}
+          {/*  placeholder="Purchase Ratio"*/}
+          {/*  value={purchaseRatio}*/}
+          {/*  onChange={e => setPurchaseRatio(Number(e.target.value))}*/}
+          {/*  required*/}
+          {/*  className="input input-bordered w-full max-w-xs"*/}
+          {/*/>*/}
+          <IntegerInput
+            value={String(purchaseRatio)}
+            onChange={val => {
+              setPurchaseRatio(Number(val));
+            }}
             placeholder="Purchase Ratio"
-            value={purchaseRatio}
-            onChange={e => setPurchaseRatio(Number(e.target.value))}
-            required
-            className="input input-bordered w-full max-w-xs"
           />
         </label>
 
         <label className="form-control w-full max-w-xs">
           <div className="label">
-            <span className="label-text">Best Price</span>
-            <span className="label-text-alt">ETH Value</span>
+            <span className="label-text">Bet Price</span>
+            <span className="label-text-alt">WEI Value</span>
           </div>
-          <input
-            type="number"
+          {/*<input*/}
+          {/*  type="number"*/}
+          {/*  placeholder="Bet Price"*/}
+          {/*  value={betPrice}*/}
+          {/*  onChange={e => setBetPrice(Number(e.target.value))}*/}
+          {/*  required*/}
+          {/*  className="input input-bordered w-full max-w-xs"*/}
+          {/*/>*/}
+          <IntegerInput
+            value={String(betPrice)}
+            onChange={val => {
+              setBetPrice(Number(val));
+            }}
             placeholder="Bet Price"
-            value={betPrice}
-            onChange={e => setBetPrice(Number(e.target.value))}
-            required
-            className="input input-bordered w-full max-w-xs"
           />
         </label>
 
         <label className="form-control w-full max-w-xs">
           <div className="label">
-            <span className="label-text">Best Fee</span>
-            <span className="label-text-alt">ETH Value</span>
+            <span className="label-text">Bet Fee</span>
+            <span className="label-text-alt">WEI Value</span>
           </div>
-          <input
-            type="number"
+          {/*<input*/}
+          {/*  type="number"*/}
+          {/*  placeholder="Bet Fee"*/}
+          {/*  value={betFee}*/}
+          {/*  onChange={e => setBetFee(Number(e.target.value))}*/}
+          {/*  required*/}
+          {/*  className="input input-bordered w-full max-w-xs"*/}
+          {/*/>*/}
+          <IntegerInput
+            value={String(betFee)}
+            onChange={val => {
+              setBetFee(Number(val));
+            }}
             placeholder="Bet Fee"
-            value={betFee}
-            onChange={e => setBetFee(Number(e.target.value))}
-            required
-            className="input input-bordered w-full max-w-xs"
           />
         </label>
 
-        <button type="submit" disabled={loading} className="btn w-full">
+        <button type="submit" disabled={loading} className="btn btn-primary w-full">
           {loading ? <span className="loading loading-spinner"></span> : "Deploy Lottery Contract"}
         </button>
       </form>
