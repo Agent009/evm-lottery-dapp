@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { renderLabelAndValue } from "@components/lottery/LabelAndValue";
 import { IntegerInput } from "@components/scaffold-eth";
-import { useReadData } from "@hooks/lotteryToken";
+import deployedContracts from "@contracts/deployedContracts";
+import { useReadData, useWriteData } from "@hooks/lotteryToken";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "@hooks/scaffold-eth";
-import { parseEther } from "viem";
+import { TransactionReceipt, parseEther } from "viem";
 import { useAccount } from "wagmi";
 
 export const ManageTokens = () => {
   const { address, isConnected, chainId } = useAccount();
   const [mounted, setMounted] = useState(false);
   const [balance, setBalance] = useState<bigint>(0n);
-  const [tokensToPurchase, setTokensToPurchase] = useState(0);
+  const [tokenAmount, setTokenAmount] = useState(0);
   const [loading, setLoading] = useState(false);
   console.log("ManageTokens -> init -> isConnected", isConnected, "chainId", chainId, "mounted", mounted);
   const { data: tokenAddress } = useScaffoldReadContract({
@@ -19,6 +20,7 @@ export const ManageTokens = () => {
     args: [],
   });
   const tokenData = useReadData(tokenAddress);
+  const tokenWrite = useWriteData(tokenAddress);
 
   useEffect(() => {
     if (isConnected) {
@@ -57,19 +59,46 @@ export const ManageTokens = () => {
   console.log("ManageTokens -> purchaseRatio", purchaseRatio, "betPrice", betPrice, "betFee", betFee);
 
   const buyTokens = async () => {
-    if (tokensToPurchase <= 0) return;
+    if (tokenAmount <= 0) return;
 
     setLoading(true);
-    const purchaseCost = parseEther("" + tokensToPurchase) / (purchaseRatio as bigint);
+    const purchaseCost = parseEther("" + tokenAmount) / (purchaseRatio as bigint);
 
     try {
       const result = await writeContractAsync({
         functionName: "purchaseTokens",
         value: purchaseCost,
       });
-      console.log(`ManageTokens -> buyTokens -> purchased ${tokensToPurchase} tokens for ${purchaseCost}`, result);
+      console.log(`ManageTokens -> buyTokens -> purchased ${tokenAmount} tokens for ${purchaseCost}`, result);
     } catch (error) {
       console.error("ManageTokens -> buyTokens -> error", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const returnTokens = async () => {
+    if (tokenAmount <= 0) return;
+
+    setLoading(true);
+    const returnedEth = parseEther("" + tokenAmount);
+
+    try {
+      // Approve the burn
+      // @ts-expect-error ignore
+      const deployedContract = deployedContracts[chainId]?.Lottery;
+      const receipt = (await tokenWrite("approve", [
+        deployedContract.address,
+        returnedEth,
+      ])) as unknown as TransactionReceipt;
+      console.log(`ManageTokens -> returnTokens -> approved ${returnedEth} -> receipt`, receipt);
+      const result = await writeContractAsync({
+        functionName: "returnTokens",
+        args: [returnedEth],
+      });
+      console.log(`ManageTokens -> returnTokens -> returned ${tokenAmount} tokens for ${returnedEth}`, result);
+    } catch (error) {
+      console.error("ManageTokens -> returnTokens -> error", error);
     } finally {
       setLoading(false);
     }
@@ -89,16 +118,19 @@ export const ManageTokens = () => {
       </div>
 
       <div className="flex flex-wrap justify-center mt-5">
-        <div className="join">
-          <IntegerInput
-            value={String(tokensToPurchase)}
-            onChange={updatedTxValue => {
-              setTokensToPurchase(Number(updatedTxValue));
-            }}
-            placeholder="Tokens"
-          />
-          <button disabled={loading} className="btn join-item rounded-r-full" onClick={buyTokens}>
-            {loading ? <span className="loading loading-spinner"></span> : "Buy Tokens"}
+        <IntegerInput
+          value={String(tokenAmount)}
+          onChange={updatedTxValue => {
+            setTokenAmount(Number(updatedTxValue));
+          }}
+          placeholder="Tokens"
+        />
+        <div className="join join-vertical lg:join-horizontal">
+          <button disabled={loading} className="btn join-item" onClick={buyTokens}>
+            {loading ? <span className="loading loading-spinner"></span> : "Buy"}
+          </button>
+          <button disabled={loading} className="btn join-item" onClick={returnTokens}>
+            {loading ? <span className="loading loading-spinner"></span> : "Return"}
           </button>
         </div>
       </div>

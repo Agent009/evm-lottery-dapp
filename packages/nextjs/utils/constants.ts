@@ -45,7 +45,7 @@ export const constants = Object.freeze({
   account: {
     deployerMemonic: process.env.MNEMONIC || "",
     deployerAddress: process.env.DEPLOYER_ADDRESS || "",
-    deployerPrivateKey: process.env.PRIVATE_KEY || "",
+    deployerPrivateKey: process.env.NEXT_PUBLIC_DEPLOYER_PRIVATE_KEY || "",
   },
   contracts: {
     lotteryToken: {

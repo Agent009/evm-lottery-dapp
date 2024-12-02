@@ -12,18 +12,7 @@ type HookFunc = (method: string, args?: unknown[] | undefined) => Promise<unknow
  * Hook to get token data
  */
 export const useReadData = (address: Address): HookFunc => {
-  const walletClient = createWalletClient({
-    chain: hardhat,
-    transport: http(),
-  });
-
   return async (method: string, args?: unknown[] | undefined) => {
-    if (!walletClient) {
-      notification.error(`useTokenData (${address}) -> read (${method}) -> error -> Cannot access account`);
-      console.error(`useTokenData (${address}) -> read (${method}) -> error -> Cannot access account`);
-      return;
-    }
-
     try {
       const publicClient = getPublicClient(wagmiConfig);
       const contract = getContract({
@@ -75,6 +64,7 @@ export const useReadData = (address: Address): HookFunc => {
  */
 export const useWriteData = (address: Address): HookFunc => {
   const walletClient = createWalletClient({
+    account: constants.account.deployerPrivateKey,
     chain: hardhat,
     transport: http(),
   });
@@ -83,7 +73,7 @@ export const useWriteData = (address: Address): HookFunc => {
     if (!walletClient) {
       notification.error(`useTokenData (${address}) -> write (${method}) -> error -> Cannot access account`);
       console.error(`useTokenData (${address}) -> write (${method}) -> error -> Cannot access account`);
-      return;
+      return null;
     }
 
     try {
@@ -111,6 +101,7 @@ export const useWriteData = (address: Address): HookFunc => {
         const receipt = await publicClient.getTransactionReceipt({ hash: tx });
         gasPrices(receipt, `useTokenData -> write (${method})`);
         console.log(`useTokenData -> write (${method}) -> tx`, receipt.transactionHash);
+        return receipt;
       }
     } catch (error: any) {
       console.error(`useTokenData (${address}) -> write (${method}) -> error`, error);
