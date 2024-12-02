@@ -82,6 +82,14 @@ contract Lottery is Ownable {
         paymentToken.mint(msg.sender, msg.value * purchaseRatio);
     }
 
+    /// @notice Charges the bet price and creates a new bet slot with the sender's address
+    function bet() public whenBetsOpen {
+        ownerPool += betFee;
+        prizePool += betPrice;
+        _slots.push(msg.sender);
+        paymentToken.transferFrom(msg.sender, address(this), betPrice + betFee);
+    }
+
     function betMany(uint256 times) external whenBetsOpen {
         require(times > 0, "Number of times must be greater than zero");
         uint256 totalBetPrice = betPrice * times;
@@ -108,7 +116,6 @@ contract Lottery is Ownable {
 
         paymentToken.transferFrom(msg.sender, address(this), totalAmount);
     }
-
 
     /// @notice Closes the lottery and calculates the prize, if any
     /// @dev Anyone can call this function at any time after the closing time
