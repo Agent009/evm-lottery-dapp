@@ -20,7 +20,7 @@ export const ManageTokens = () => {
     args: [],
   });
   const tokenData = useReadData(tokenAddress);
-  const tokenWrite = useWriteData(tokenAddress);
+  const tokenWrite = useWriteData(tokenAddress, address);
 
   useEffect(() => {
     if (isConnected) {
@@ -81,7 +81,7 @@ export const ManageTokens = () => {
     if (tokenAmount <= 0) return;
 
     setLoading(true);
-    const returnedEth = parseEther("" + tokenAmount);
+    const returnedEth = tokenAmount / purchaseRatio;
 
     try {
       // Approve the burn
@@ -96,7 +96,10 @@ export const ManageTokens = () => {
         functionName: "returnTokens",
         args: [returnedEth],
       });
-      console.log(`ManageTokens -> returnTokens -> returned ${tokenAmount} tokens for ${returnedEth}`, result);
+      console.log(
+        `ManageTokens -> returnTokens -> returned ${tokenAmount} tokens for ${returnedEth}, result ->`,
+        result,
+      );
     } catch (error) {
       console.error("ManageTokens -> returnTokens -> error", error);
     } finally {

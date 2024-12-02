@@ -12,9 +12,9 @@ export const DeployLottery = () => {
   const [mounted, setMounted] = useState(false);
   const [tokenName, setTokenName] = useState("");
   const [tokenSymbol, setTokenSymbol] = useState("");
-  const [purchaseRatio, setPurchaseRatio] = useState(1);
-  const [betPrice, setBetPrice] = useState(1);
-  const [betFee, setBetFee] = useState(0.2);
+  const [purchaseRatio, setPurchaseRatio] = useState(1); // Default: 10^18 tokens / ETH
+  const [betPrice, setBetPrice] = useState(1 / 1000); // Default: 10^15 tokens
+  const [betFee, setBetFee] = useState((1 / 1000) * 0.05); // Default: 5% of bet price, 5^13 tokens
   const [loading, setLoading] = useState(false);
   console.log(
     "DeployLottery -> init -> isConnected",
