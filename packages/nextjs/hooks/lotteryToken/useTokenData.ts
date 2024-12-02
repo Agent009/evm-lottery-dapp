@@ -3,7 +3,8 @@ import { wagmiConfig } from "@services/web3/wagmiConfig";
 import { constants } from "@utils/constants";
 import { getParsedError, notification } from "@utils/scaffold-eth";
 import { getPublicClient } from "@wagmi/core";
-import { Address, TransactionReceipt, createWalletClient, formatEther, getContract, http } from "viem";
+import { Account, Address, TransactionReceipt, createWalletClient, formatEther, getContract, http } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import { hardhat } from "viem/chains";
 
 type HookFunc = (method: string, args?: unknown[] | undefined) => Promise<unknown | undefined>;
@@ -62,18 +63,23 @@ export const useReadData = (address: Address): HookFunc => {
 /**
  * Hook to write token data
  */
-export const useWriteData = (address: Address): HookFunc => {
+export const useWriteData = (address: Address, account?: Account | Address): HookFunc => {
+  const walletAccount = account || privateKeyToAccount(`0x${constants.account.deployerPrivateKey}`);
   const walletClient = createWalletClient({
-    account: constants.account.deployerPrivateKey,
+    account: walletAccount,
     chain: hardhat,
     transport: http(),
   });
 
   return async (method: string, args?: unknown[] | undefined) => {
     if (!walletClient) {
-      notification.error(`useTokenData (${address}) -> write (${method}) -> error -> Cannot access account`);
+      notification.error(
+        `useTokenData (${address}) -> write (${method}) -> error -> Cannot access account for ${walletAccount}`,
+      );
       console.error(`useTokenData (${address}) -> write (${method}) -> error -> Cannot access account`);
       return null;
+    } else {
+      console.log(`useTokenData (${address}) -> write (${method}) -> walletClient ready for ${walletAccount}`);
     }
 
     try {
