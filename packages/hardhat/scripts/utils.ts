@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { isAddress, TransactionReceipt, formatEther } from "ethers";
-import { constants } from "@lib/constants";
+import { constants } from "../lib/constants";
 
 export const lotteryTokenContractAddress = constants.contracts.lotteryToken.sepolia;
 export const lotteryContractAddress = constants.contracts.lottery.sepolia;
