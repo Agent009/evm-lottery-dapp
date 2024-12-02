@@ -82,25 +82,33 @@ contract Lottery is Ownable {
         paymentToken.mint(msg.sender, msg.value * purchaseRatio);
     }
 
-    /// @notice Charges the bet price and creates a new bet slot with the sender's address
-    function bet() public whenBetsOpen {
-        ownerPool += betFee;
-        prizePool += betPrice;
-        _slots.push(msg.sender);
-        paymentToken.transferFrom(msg.sender, address(this), betPrice + betFee);
+    function betMany(uint256 times) external whenBetsOpen {
+        require(times > 0, "Number of times must be greater than zero");
+        uint256 totalBetPrice = betPrice * times;
+        uint256 totalBetFee = betFee * times;
+        uint256 totalAmount = totalBetPrice + totalBetFee;
+
+        require(
+          paymentToken.balanceOf(msg.sender) >= totalAmount,
+          "Not enough tokens"
+        );
+        require(
+          paymentToken.allowance(msg.sender, address(this)) >= totalAmount,
+          "Not enough allowance"
+        );
+
+        ownerPool += totalBetFee;
+        prizePool += totalBetPrice;
+
+        uint256 localTimes = times;
+        while (localTimes > 0) {
+          _slots.push(msg.sender);
+          localTimes--;
+        }
+
+        paymentToken.transferFrom(msg.sender, address(this), totalAmount);
     }
 
-    /// @notice Calls the bet function `times` times
-    /// @dev this can be optimised
-    function betMany(uint256 times) external {
-        require(times > 0);
-        while (times > 0) {
-            // TODO: Fix this lazy implementation. It can be optimised.
-            // We can just this one time instead of in a loop.
-            bet();
-            times--;
-        }
-    }
 
     /// @notice Closes the lottery and calculates the prize, if any
     /// @dev Anyone can call this function at any time after the closing time
