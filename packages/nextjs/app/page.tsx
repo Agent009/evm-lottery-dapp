@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DeployLottery } from "@components/lottery/DeployLottery";
 import { LotteryInfo } from "@components/lottery/LotteryInfo";
+import { ManageBets } from "@components/lottery/ManageBets";
 import { ManageTokens } from "@components/lottery/ManageTokens";
 import { Address } from "@components/scaffold-eth";
 import { constants } from "@utils/constants";
@@ -56,7 +57,7 @@ const Home: NextPage = () => {
               </div>
               {activeTab === "lotteryInfo" && <LotteryInfo />}
               {activeTab === "manageTokens" && <ManageTokens />}
-              {/*{activeTab === "manageBets" && <ManageBets />}*/}
+              {activeTab === "manageBets" && <ManageBets />}
             </div>
           </div>
         </div>

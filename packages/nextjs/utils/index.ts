@@ -14,7 +14,7 @@ export const tokenAmountInWEI = (
   tokenRatio: bigint = constants.contracts.lottery.TOKEN_RATIO,
   tokenValue: bigint = constants.contracts.lottery.TOKEN_VALUE,
 ) => {
-  return (BigInt(amount) * tokenValue) / tokenRatio;
+  return (BigInt(amount || 1n) * tokenValue) / tokenRatio;
 };
 
 /**
@@ -28,7 +28,21 @@ export const weiToTokenAmount = (
   tokenRatio: bigint = constants.contracts.lottery.TOKEN_RATIO,
   tokenValue: bigint = constants.contracts.lottery.TOKEN_VALUE,
 ) => {
-  return (amount * tokenRatio) / tokenValue;
+  return (BigInt(amount || 1n) * tokenRatio) / tokenValue;
+};
+
+/**
+ * Convert stored amount in WEI to displayed token amount.
+ * @param amount
+ * @param tokenRatio
+ * @param tokenValue
+ */
+export const weiToFractionalTokenAmount = (
+  amount: bigint,
+  tokenRatio: bigint = constants.contracts.lottery.TOKEN_RATIO,
+  tokenValue: bigint = constants.contracts.lottery.TOKEN_VALUE,
+) => {
+  return (Number(amount || 1) * Number(tokenRatio)) / Number(tokenValue);
 };
 
 /**
