@@ -48,3 +48,14 @@ Run smart contract test with `yarn hardhat:test`
 - Edit your smart contracts in `packages/hardhat/contracts`
 - Edit your frontend homepage at `packages/nextjs/app/page.tsx`. For guidance on [routing](https://nextjs.org/docs/app/building-your-application/routing/defining-routes) and configuring [pages/layouts](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts) checkout the Next.js documentation.
 - Edit your deployment scripts in `packages/hardhat/deploy`
+
+## Testing Locally
+
+* This should be done via the **NextJS** app deployed at `packages/nextjs`.
+* Choose **Sepolia** or **HardHat** as the network after connecting with a wallet.
+* If `deployedContracts.ts` already contains deployment details for your selected chain, the interface will show you actions to manage that lottery.
+* Alternatively, to quickly test locally, change the **contract name** for your desired chain within `deployedContracts.ts` to an arbitrary string temporarily.
+* This should result in the contract deployment interface being displayed on the homepage.
+* From here, you can deploy the contract via the UI, setting the ratio and prices as needed.
+* Once deployed, copy and paste the deployed contract address back into `deployedContracts.ts` and revert the changes made earlier to the contract name.
+* This should now allow you to interact with the locally deployed contract via the interface.
