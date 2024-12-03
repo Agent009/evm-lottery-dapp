@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { renderLabelAndValue } from "@components/lottery/LabelAndValue";
 import { useReadData } from "@hooks/lotteryToken";
 import { useScaffoldReadContract } from "@hooks/scaffold-eth";
-import { formatEther } from "viem";
 import { useAccount } from "wagmi";
+import { formatNumber, weiToTokenAmount } from "~~/utils";
 
 export const LotteryInfo = () => {
   const { address, isConnected, chainId } = useAccount();
@@ -94,13 +94,28 @@ export const LotteryInfo = () => {
       <h2 className="text-xl font-bold">Lottery Details</h2>
 
       <div className="flex flex-wrap justify-center">
-        {renderLabelAndValue<bigint>("Purchase Ratio", "ETH", purchaseRatio)}
-        {renderLabelAndValue<bigint>("Bet Price", "ETH", betPrice)}
-        {renderLabelAndValue<bigint>("Bet Fee", "ETH", betFee)}
-        {renderLabelAndValue<bigint>("Prize Pool", "ETH", prizePool)}
-        {renderLabelAndValue<boolean>("Bets Open", "", betsOpen)}
-        {renderLabelAndValue<bigint>("Bets Closing Time", "", betsClosingTime)}
-        {renderLabelAndValue<bigint>("Token Balance", "", balance)}
+        {renderLabelAndValue<bigint>({
+          label: "Purchase Ratio",
+          label2: "Tokens / WEI",
+          value: purchaseRatio,
+          asETH: false,
+        })}
+        {renderLabelAndValue<string>({
+          label: "Bet Price",
+          label2: "Tokens",
+          value: formatNumber(betPrice),
+          asETH: false,
+        })}
+        {renderLabelAndValue<string>({ label: "Bet Fee", label2: "Tokens", value: formatNumber(betFee), asETH: false })}
+        {renderLabelAndValue<string>({
+          label: "Prize Pool",
+          label2: "Tokens",
+          value: formatNumber(prizePool),
+          asETH: false,
+        })}
+        {renderLabelAndValue<boolean>({ label: "Bets Open", value: betsOpen })}
+        {renderLabelAndValue<bigint>({ label: "Bets Closing Time", value: betsClosingTime })}
+        {renderLabelAndValue<string>({ label: "Token Balance", value: formatNumber(weiToTokenAmount(balance)) })}
       </div>
     </div>
   );

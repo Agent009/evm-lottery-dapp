@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { renderLabelAndValue } from "@components/lottery/LabelAndValue";
-import { IntegerInput } from "@components/scaffold-eth";
 import deployedContracts from "@contracts/deployedContracts";
 import { useReadData, useWriteData } from "@hooks/lotteryToken";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "@hooks/scaffold-eth";
-import { TransactionReceipt, parseEther } from "viem";
+import { TransactionReceipt, formatEther } from "viem";
 import { useAccount } from "wagmi";
+import { formatNumber, tokenAmountInWEI, weiToTokenAmount } from "~~/utils";
 
 export const ManageTokens = () => {
   const { address, isConnected, chainId } = useAccount();
@@ -20,7 +20,7 @@ export const ManageTokens = () => {
     args: [],
   });
   const tokenData = useReadData(tokenAddress);
-  const tokenWrite = useWriteData(tokenAddress, address);
+  const tokenWrite = useWriteData(tokenAddress);
 
   useEffect(() => {
     if (isConnected) {
@@ -55,6 +55,9 @@ export const ManageTokens = () => {
     functionName: "betFee",
     args: [],
   });
+
+  const tokenAmountWEIValue = tokenAmountInWEI(BigInt(tokenAmount), purchaseRatio || 1n);
+  const tokenAmountETHValue = formatEther(tokenAmountWEIValue);
   const { writeContractAsync } = useScaffoldWriteContract("Lottery");
   console.log("ManageTokens -> purchaseRatio", purchaseRatio, "betPrice", betPrice, "betFee", betFee);
 
@@ -62,14 +65,23 @@ export const ManageTokens = () => {
     if (tokenAmount <= 0) return;
 
     setLoading(true);
-    const purchaseCost = parseEther("" + tokenAmount) / (purchaseRatio as bigint);
+    console.log(
+      `ManageTokens -> buyTokens -> tokenAmount`,
+      tokenAmount,
+      "tokenCost (ETH / WEI)",
+      tokenAmountETHValue,
+      tokenAmountWEIValue,
+    );
 
     try {
       const result = await writeContractAsync({
         functionName: "purchaseTokens",
-        value: purchaseCost,
+        value: tokenAmountWEIValue,
       });
-      console.log(`ManageTokens -> buyTokens -> purchased ${tokenAmount} tokens for ${purchaseCost}`, result);
+      console.log(
+        `ManageTokens -> buyTokens -> purchased ${tokenAmount} tokens for ${tokenAmountETHValue} ETH`,
+        result,
+      );
     } catch (error) {
       console.error("ManageTokens -> buyTokens -> error", error);
     } finally {
@@ -81,23 +93,29 @@ export const ManageTokens = () => {
     if (tokenAmount <= 0) return;
 
     setLoading(true);
-    const returnedEth = tokenAmount / purchaseRatio;
 
     try {
+      console.log(
+        `ManageTokens -> returnTokens -> tokenAmount`,
+        tokenAmount,
+        "returnedETH (ETH / WEI)",
+        tokenAmountETHValue,
+        tokenAmountWEIValue,
+      );
       // Approve the burn
       // @ts-expect-error ignore
       const deployedContract = deployedContracts[chainId]?.Lottery;
       const receipt = (await tokenWrite("approve", [
         deployedContract.address,
-        returnedEth,
+        tokenAmountWEIValue,
       ])) as unknown as TransactionReceipt;
-      console.log(`ManageTokens -> returnTokens -> approved ${returnedEth} -> receipt`, receipt);
+      console.log(`ManageTokens -> returnTokens -> approved ${tokenAmount} -> receipt`, receipt);
       const result = await writeContractAsync({
         functionName: "returnTokens",
-        args: [returnedEth],
+        args: [tokenAmountWEIValue],
       });
       console.log(
-        `ManageTokens -> returnTokens -> returned ${tokenAmount} tokens for ${returnedEth}, result ->`,
+        `ManageTokens -> returnTokens -> returned ${tokenAmount} tokens for ${tokenAmountETHValue} ETH, result ->`,
         result,
       );
     } catch (error) {
@@ -114,27 +132,66 @@ export const ManageTokens = () => {
       <h2 className="text-xl font-bold">Manage Tokens</h2>
 
       <div className="flex flex-wrap justify-center">
-        {renderLabelAndValue<bigint>("Purchase Ratio", "ETH", purchaseRatio)}
-        {renderLabelAndValue<bigint>("Bet Price", "ETH", betPrice)}
-        {renderLabelAndValue<bigint>("Bet Fee", "ETH", betFee)}
-        {renderLabelAndValue<bigint>("Token Balance", "", balance)}
+        {renderLabelAndValue<bigint>({
+          label: "Purchase Ratio",
+          label2: "Tokens / WEI",
+          value: purchaseRatio,
+          asETH: false,
+        })}
+        {renderLabelAndValue<string>({
+          label: "Bet Price",
+          label2: "Tokens",
+          value: formatNumber(betPrice),
+          asETH: false,
+        })}
+        {renderLabelAndValue<string>({ label: "Bet Fee", label2: "Tokens", value: formatNumber(betFee), asETH: false })}
+        {renderLabelAndValue<string>({
+          label: "Token Balance",
+          value: formatNumber(weiToTokenAmount(balance)),
+          size: "1/2",
+          asETH: false,
+        })}
       </div>
 
       <div className="flex flex-wrap justify-center mt-5">
-        <IntegerInput
-          value={String(tokenAmount)}
-          onChange={val => {
-            setTokenAmount(Number(val));
-          }}
-          placeholder="Tokens"
-        />
-        <div className="join join-vertical lg:join-horizontal">
-          <button disabled={loading} className="btn join-item" onClick={buyTokens}>
-            {loading ? <span className="loading loading-spinner"></span> : "Buy"}
-          </button>
-          <button disabled={loading} className="btn join-item" onClick={returnTokens}>
-            {loading ? <span className="loading loading-spinner"></span> : "Return"}
-          </button>
+        <div className="join">
+          {/*<IntegerInput*/}
+          {/*  value={String(tokenAmount)}*/}
+          {/*  onChange={val => {*/}
+          {/*    setTokenAmount(Number(val));*/}
+          {/*  }}*/}
+          {/*  placeholder="Tokens"*/}
+          {/*/>*/}
+          <label className="form-control w-full max-w-xs">
+            <input
+              className="input input-accent bg-base-200 join-item"
+              placeholder="Tokens"
+              type="number"
+              value={tokenAmount}
+              onChange={e => setTokenAmount(Number(e.target.value))}
+            />
+            <div className="label">
+              <span className="label-text-alt">Value</span>
+              <span className="label-text-alt">{tokenAmountETHValue} ETH</span>
+            </div>
+          </label>
+
+          <div
+            className="tooltip tooltip-info"
+            data-tip="You will pay ETH equal to number of tokens divided by 'Purchase Ratio'"
+          >
+            <button disabled={loading} className="btn join-item" onClick={buyTokens}>
+              {loading ? <span className="loading loading-spinner"></span> : "Buy"}
+            </button>
+          </div>
+          <div
+            className="tooltip tooltip-info"
+            data-tip="You will get ETH equal to number of returned tokens divided by 'Purchase Ratio'"
+          >
+            <button disabled={loading} className="btn join-item" onClick={returnTokens}>
+              {loading ? <span className="loading loading-spinner"></span> : "Return"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

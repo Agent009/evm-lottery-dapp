@@ -79,7 +79,7 @@ export const useWriteData = (address: Address, account?: Account | Address): Hoo
       console.error(`useTokenData (${address}) -> write (${method}) -> error -> Cannot access account`);
       return null;
     } else {
-      console.log(`useTokenData (${address}) -> write (${method}) -> walletClient ready for ${walletAccount}`);
+      console.log(`useTokenData (${address}) -> write (${method}) -> walletClient ready for`, walletAccount);
     }
 
     try {
@@ -87,16 +87,14 @@ export const useWriteData = (address: Address, account?: Account | Address): Hoo
       const contract = getContract({
         abi: LotteryToken.abi,
         address: address || constants.contracts.lotteryToken.sepolia,
-        client: publicClient,
+        client: { public: publicClient, wallet: walletClient },
       });
       let tx;
 
       switch (method) {
         case "approve":
           // @ts-expect-error ignore
-          tx = await contract.write.approve(args, {
-            account: walletClient.account,
-          });
+          tx = await contract.write.approve(args);
           break;
         default:
           notification.error(`useTokenData -> write (${method}) -> error -> invalid method`);

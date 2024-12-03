@@ -1,6 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { Contract } from "ethers";
+import { constants } from "@lib/constants.ts";
 
 /**
  * Deploys the "Lottery" contract using the deployer account and constructor arguments set to the deployer address
@@ -20,9 +21,10 @@ const deployLottery: DeployFunction = async function (hre: HardhatRuntimeEnviron
   */
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
-  const TOKEN_RATIO = 1n; // Default: 10^18 tokens / ETH
-  const BET_PRICE = TOKEN_RATIO / 1000n; // Default: 10^15 tokens
-  const BET_FEE = BET_PRICE / 20n; // Default: 5% of bet price, 5^13 tokens
+  // const TOKEN_VALUE = constants.contracts.lottery.TOKEN_VALUE;
+  const TOKEN_RATIO = constants.contracts.lottery.TOKEN_RATIO;
+  const BET_PRICE = constants.contracts.lottery.BET_PRICE;
+  const BET_FEE = constants.contracts.lottery.BET_FEE;
 
   const deployment = await deploy("Lottery", {
     from: deployer!,

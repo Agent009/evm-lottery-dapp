@@ -2,6 +2,7 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import {LotteryToken} from "./LotteryToken.sol";
 
 /// @title A very simple lottery contract
@@ -95,10 +96,18 @@ contract Lottery is Ownable {
         uint256 totalBetPrice = betPrice * times;
         uint256 totalBetFee = betFee * times;
         uint256 totalAmount = totalBetPrice + totalBetFee;
+        uint256 balance = paymentToken.balanceOf(msg.sender);
 
         require(
-          paymentToken.balanceOf(msg.sender) >= totalAmount,
-          "Not enough tokens"
+            balance >= totalAmount,
+            string(
+                abi.encodePacked(
+                "Not enough tokens. Balance: ",
+                Strings.toString(balance),
+                ", Fee: ",
+                Strings.toString(totalAmount)
+                )
+            )
         );
         require(
           paymentToken.allowance(msg.sender, address(this)) >= totalAmount,

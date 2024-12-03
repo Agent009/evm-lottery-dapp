@@ -38,11 +38,19 @@ export const getSignerFor = (account: string) => {
   return new ethers.Wallet(account);
 };
 
-export const gasPrices = async (receipt: TransactionReceipt, msgPrefix?: string) => {
+export const gasPrices = (receipt: TransactionReceipt, msgPrefix?: string) => {
   const gasPrice = formatEther(receipt.gasPrice);
   const gasUsed = receipt.gasUsed.toString();
   const totalCost = formatEther(receipt.gasPrice * receipt.gasUsed);
-  console.log(`${msgPrefix} -> gas -> price`, gasPrice, "used", gasUsed, "totalCost", totalCost);
+  console.log(
+    `${msgPrefix || "gasPrices"} -> gas -> price`,
+    gasPrice,
+    "used",
+    gasUsed,
+    "totalCost",
+    totalCost,
+    // receipt,
+  );
   return {
     display: {
       gasPrice,

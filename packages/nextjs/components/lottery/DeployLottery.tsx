@@ -4,21 +4,26 @@ import Lottery from "@contracts/Lottery.json";
 import deployedContracts from "@contracts/deployedContracts";
 import { useScaffoldReadContract } from "@hooks/scaffold-eth";
 import { wagmiConfig } from "@services/web3/wagmiConfig";
+import { constants } from "@utils/constants";
 import { notification } from "@utils/scaffold-eth";
 import { getPublicClient } from "@wagmi/core";
-import { Hex, parseEther } from "viem";
+import { Hex } from "viem";
 import { useAccount, useDeployContract } from "wagmi";
 
+// const TOKEN_VALUE = constants.contracts.lottery.TOKEN_VALUE;
+const TOKEN_RATIO = constants.contracts.lottery.TOKEN_RATIO;
+const BET_PRICE = constants.contracts.lottery.BET_PRICE;
+const BET_FEE = constants.contracts.lottery.BET_FEE;
+
 export const DeployLottery = () => {
-  const ONE_ETH = parseEther("1");
   const { address, isConnected, chainId } = useAccount();
   const { deployContract } = useDeployContract();
   const [mounted, setMounted] = useState(false);
   const [tokenName, setTokenName] = useState("");
   const [tokenSymbol, setTokenSymbol] = useState("");
-  const [purchaseRatio, setPurchaseRatio] = useState<number>(Number(ONE_ETH)); // Default: 10^18 tokens / ETH
-  const [betPrice, setBetPrice] = useState<number>(Number(ONE_ETH / 1000n)); // Default: 10^15 tokens
-  const [betFee, setBetFee] = useState<number>(Number(ONE_ETH / 1000n / 20n)); // Default: 5% of bet price, 5^13 tokens
+  const [purchaseRatio, setPurchaseRatio] = useState<number>(Number(TOKEN_RATIO));
+  const [betPrice, setBetPrice] = useState<number>(Number(BET_PRICE));
+  const [betFee, setBetFee] = useState<number>(Number(BET_FEE));
   const [loading, setLoading] = useState(false);
   console.log(
     "DeployLottery -> init -> isConnected",
@@ -156,23 +161,23 @@ export const DeployLottery = () => {
         <label className="form-control w-full max-w-xs">
           <div className="label">
             <span className="label-text">Purchase Ratio</span>
-            <span className="label-text-alt">WEI Value</span>
+            <span className="label-text-alt">Tokens / WEI</span>
           </div>
-          {/*<input*/}
-          {/*  type="number"*/}
-          {/*  placeholder="Purchase Ratio"*/}
-          {/*  value={purchaseRatio}*/}
-          {/*  onChange={e => setPurchaseRatio(Number(e.target.value))}*/}
-          {/*  required*/}
-          {/*  className="input input-bordered w-full max-w-xs"*/}
-          {/*/>*/}
-          <IntegerInput
-            value={String(purchaseRatio)}
-            onChange={val => {
-              setPurchaseRatio(Number(val));
-            }}
+          <input
+            type="number"
             placeholder="Purchase Ratio"
+            value={purchaseRatio}
+            onChange={e => setPurchaseRatio(Number(e.target.value))}
+            required
+            className="input input-bordered w-full max-w-xs"
           />
+          {/*<IntegerInput*/}
+          {/*  value={String(purchaseRatio)}*/}
+          {/*  onChange={val => {*/}
+          {/*    setPurchaseRatio(Number(val));*/}
+          {/*  }}*/}
+          {/*  placeholder="Purchase Ratio"*/}
+          {/*/>*/}
         </label>
 
         <label className="form-control w-full max-w-xs">

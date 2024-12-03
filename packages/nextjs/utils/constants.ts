@@ -1,3 +1,5 @@
+import { parseEther } from "viem";
+
 // App
 const name = "EVM Lottery DApp";
 const caption = "Let's ETH!";
@@ -51,8 +53,12 @@ export const constants = Object.freeze({
     lotteryToken: {
       sepolia: process.env.LOTTERY_TOKEN_SEPOLIA || "",
     },
-    token: {
+    lottery: {
       sepolia: process.env.LOTTERY_SEPOLIA || "",
+      TOKEN_VALUE: parseEther(String(1 / 1_000)), // Default: 1 token equals 10^15 WEI
+      TOKEN_RATIO: 1n, // Default: Get 1 token per WEI / 10^18 tokens per ETH
+      BET_PRICE: parseEther(String(1 / 1_000)), // Default: Costs 10^15 tokens
+      BET_FEE: parseEther(String(1 / 1_000 / 5)), // Default: Costs 2 * 10^14 tokens
     },
   },
   integrations: {
